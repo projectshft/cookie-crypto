@@ -39,7 +39,6 @@ app.get('/current_user', (req, res) => {
 
 passport.use('login', new LocalStrategy((username, password, done) => {
   User.findOne({ username: username }).then(existingUser => {
-    console.log(existingUser)
     if (existingUser) {
       // we already have a record with the given profile ID
       if (existingUser.validPassword(password)) {
@@ -48,17 +47,13 @@ passport.use('login', new LocalStrategy((username, password, done) => {
         return done(false);
       }
     } else {
-        // we don't have a user record with this ID, make a new record!
-        const myNewUser = new User({ username: username })
+      const myNewUser = new User({ username: username })
 
-        myNewUser.setPassword(password);
+      myNewUser.setPassword(password);
 
-        console.log(myNewUser)
-
-        myNewUser.save(function (user) {
-          console.log(user)
-          done(null, user);
-        });
+      myNewUser.save(function (err, user) {
+        done(null, user);
+      });
     }
   })
 }));
