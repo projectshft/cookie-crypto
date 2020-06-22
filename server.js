@@ -12,7 +12,7 @@ const User = require('./User');
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
-mongoose.connect('mongodb://localhost/cookie-auth');
+mongoose.connect('mongodb://localhost/cookie-auth', { useNewUrlParser: true });
 
 app.use(cookieSession({
   name: 'session',
@@ -30,7 +30,9 @@ passport.serializeUser((user, done) => {
 });
 
 passport.deserializeUser((userID, done) => {
-  done(null, userID);
+  User.findById(userID, function (err, user) {
+    done(null, user);
+  });
 });
 
 app.get('/current_user', (req, res) => {
@@ -58,6 +60,15 @@ passport.use('login', new LocalStrategy((username, password, done) => {
   })
 }));
 
+const authenticateRequest = function (req, res, next) {
+  if (!req.isAuthenticated()) {// Denied. Redirect to login
+    console.log('DEEEnied')
+    res.redirect('/login');
+  } else {
+    next();
+  }
+};
+
 app.post('/register', passport.authenticate('login', {
   successRedirect: '/success',
   failureRedirect: '/login'
@@ -74,12 +85,12 @@ app.get('/logout', (req, res) => {
 });
 
 app.get('/success', (req, res) => {
-  if (req.isAuthenticated()) {
-    res.send("Hey, hello from the server!");
-  } else {
-    res.send("Nope!");
-  }
-})
+  res.send('Hey, hello from the server!');
+});
+
+app.get('/protected', authenticateRequest, (req, res) => {
+  res.send("Secret stuff!");
+});
 
 app.get('/login', (req, res) => {
   res.sendFile(__dirname + '/login.html');
